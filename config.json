@@ -1,0 +1,11 @@
+{
+  "vm_name": "forhom",
+  "whoami": "sf",
+  "environnementType": "lamp",
+  "projects": [
+	  	{
+	  		"project_name": "forhom",
+	  		"projectType": "sf1.4"
+	  	}
+  	]
+}

@@ -1,0 +1,104 @@
+---
+- hosts: SF2
+  pre_tasks:
+  - name: loadVars
+    include_vars: ../local/projects.json
+  - name: echoVars
+    debug: var=item.project_name
+    with_items: '{{ projects }}'
+  roles:
+  - role: geerlingguy.mysql
+    become: yes
+    mysql_root_password_update: yes
+    mysql_root_password: '{{ vm_name }}'
+    mysql_databases:
+      - name: '{{ projects[0].project_name }}'
+    mysql_users:
+      - name: '{{ projects[0].project_name }}'
+        password: '{{ projects[0].project_name }}'
+        priv: "{{ projects[0].project_name }}.*:ALL"
+  - role: geerlingguy.nginx
+    become: yes
+    nginx_vhosts:
+      - listen: "80 default_server"
+        server_name: "{{ projects[0].project_name }}.loc"
+        root: "/var/www/{{ projects[0].project_name }}/web"
+        index: "index.php index.html index.htm"
+        extra_parameters: |
+          location ~ ^/(app_dev|config)\.php(/|$) {
+              fastcgi_pass unix:/var/run/php5-fpm.sock;
+              fastcgi_split_path_info ^(.+\.php)(/.*)$;
+              include fastcgi_params;
+              fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+              fastcgi_param DOCUMENT_ROOT $realpath_root;
+          }
+          location ~ ^/app\.php(/|$) {
+              fastcgi_pass unix:/var/run/php5-fpm.sock;
+              fastcgi_split_path_info ^(.+\.php)(/.*)$;
+              include fastcgi_params;
+              fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+              fastcgi_param DOCUMENT_ROOT $realpath_root;
+              internal;
+          }
+#          location ~ \.php$ {
+#              fastcgi_split_path_info ^(.+\.php)(/.+)$;
+#              fastcgi_pass unix:/var/run/php5-fpm.sock;
+#              fastcgi_index index.php;
+#              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+#              include fastcgi_params;
+#          }
+  - role: geerlingguy.php
+    become: yes
+    php_enable_php_fpm: false
+#    php_install_from_source: true
+#    php_source_version: "master"
+    php_webserver_daemon: "nginx"
+    php_date_timezone: "Europe/Paris"
+    php_display_errors: "On"
+    php_short_open_tag: false
+    php_packages:
+      - php-apc
+      - php-pear
+      - php5-cli
+      - php5-common
+      - php5-curl
+      - php5-dev
+      - php5-fpm
+      - php5-gd
+      - php5-intl
+      - php5-mcrypt
+      - php5-mysql
+      - php5-xsl  
+  - role: geerlingguy.git
+    become: yes
+    git_packages:
+      - git
+  - role: geerlingguy.composer
+    become: yes
+  - role: geerlingguy.java
+    become: yes
+  - role: geerlingguy.elasticsearch
+    become: yes
+  tasks:
+    - name: "Install FOP"
+      become: yes
+      apt: name=fop state=present
+    - name: "Clone repository"
+      git: repo=YourRepoURL
+           dest=/var/www/{{ projects[0].project_name }}
+           accept_hostkey=yes
+           update=no
+    - name: "Upload dump if exists"
+#      local_action: stat path=local/{{ projects[0].project_name }}.sql
+#      register: dump_exists
+      copy: src=../local/{{ projects[0].project_name }}.sql dest=~
+
+#      when: dump_exists
+#    with_items: "{{ projects }}"
+
+
+
+    - name: "Import dump if exists"
+      mysql_db: name={{ projects[0].project_name }} login_user={{ projects[0].project_name }} login_password={{ projects[0].project_name }} state=import target=~/{{ projects[0].project_name }}.sql
+    - name: "Remove uploaded dump"
+      file: path=~/{{ projects[0].project_name }}.sql state=absent

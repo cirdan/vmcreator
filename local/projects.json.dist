@@ -1,0 +1,12 @@
+{
+  "whoami": "YourName",
+  "vm_name": "TheVMName",
+  "ip_addr": "172.28.128.3",
+  "box": "debian/wheezy64",
+  "projects": [
+    {
+	  "project_name": "YourProjectName",
+	  "projectType": "sf2"
+    }
+  ]
+}
