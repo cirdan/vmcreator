@@ -1,0 +1,21 @@
+#vagrant up;ansible-playbook ansible/localdomain.yml --ask-sudo-pass
+---
+- hosts: 127.0.0.1
+  tasks:
+  - name: "Load the configuration for the project"
+    include_vars: ../local/projects.json
+  - name: "Update local /etc/hosts for main domain"
+    become: yes
+    lineinfile: 
+      dest=/etc/hosts 
+      regexp=" {{ item.project_name }}.{{ item.project_tld }}$" 
+      line='{{ ip_addr }} {{ item.project_name }}.{{ item.project_tld }}'
+    with_items: "{{ projects }}"
+  - name: "Update local /etc/hosts for aliases"
+    become: yes
+    lineinfile: 
+      dest=/etc/hosts 
+      regexp=" {{ item }}.{{ projects[0].project_tld }}$" 
+      line='{{ ip_addr }} {{ item }}.{{ projects[0].project_tld }}'
+    with_items: "{{ projects[0].project_aliases }}"
+#TODO : remove the line about this domain in ~/.ssh/known_hosts

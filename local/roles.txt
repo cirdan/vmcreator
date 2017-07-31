@@ -1,0 +1,12 @@
+# roles.txt
+
+#geerlingguy.nginx
+#geerlingguy.mysql
+#geerlingguy.php
+#geerlingguy.composer
+##geerlingguy.elasticsearch
+#geerlingguy.git
+#geerlingguy.mailhog
+#geerlingguy.nodejs
+
+# run ansible-galaxy install -r local/roles.txt -p ./local/roles

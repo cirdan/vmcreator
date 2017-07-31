@@ -1,0 +1,6 @@
+.vagrant
+.idea
+local/roles/*
+local/ansible-hosts
+local/authorized_keys
+local/projects.json
